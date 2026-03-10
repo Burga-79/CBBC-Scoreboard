@@ -20,13 +20,8 @@
     "appId": "com.cometbay.scoreboard",
     "productName": "Comet Bay Scoreboard",
     "files": [
-      "admin/**/*",
-      "display/**/*",
-      "images/**/*",
-      "main.js",
-      "server.js",
-      "preload.js",
-      "package.json"
+      "**/*",
+      "!dist/**/*"
     ],
     "win": {
       "target": "nsis"
