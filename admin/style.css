@@ -1,0 +1,452 @@
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+/* DISPLAY PAGE */
+
+.display-body {
+  background: #000;
+  color: #f5f5f5;
+  overflow: hidden;
+}
+
+.background-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+}
+
+.background-image {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+}
+
+.background-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+}
+
+.header {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 24px;
+  background: rgba(10, 20, 35, 0.9);
+  border-bottom: 2px solid #1f3b5a;
+}
+
+.club-name {
+  font-size: 1.8rem;
+  font-weight: 700;
+}
+
+.club-logo img {
+  max-height: 150px;
+}
+
+.main {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  gap: 24px;
+  padding: 16px 24px 140px;
+}
+
+.ladder-section {
+  flex: 2;
+  background: rgba(10, 20, 35, 0.9);
+  padding: 8px 12px;
+  border-radius: 6px;
+}
+
+.results-section {
+  flex: 1;
+  max-width: 35%;
+  background: rgba(10, 20, 35, 0.9);
+  padding: 8px 12px;
+  border-radius: 6px;
+}
+
+h2 {
+  margin-top: 0;
+  margin-bottom: 8px;
+  font-size: 1.8rem;
+  letter-spacing: 1px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 1.15rem;
+}
+
+th, td {
+  padding: 10px 6px;
+  text-align: center;
+}
+
+th {
+  background: #1f3b5a;
+  position: sticky;
+  top: 0;
+  font-size: 1.2rem;
+}
+
+tbody tr:nth-child(even) {
+  background: #152234;
+}
+
+tbody tr:nth-child(odd) {
+  background: #101a28;
+}
+
+.results-section {
+  max-height: calc(100vh - 180px);
+  overflow-y: auto;
+}
+
+.result-item {
+  padding: 10px 12px;
+  margin-bottom: 4px;
+  background: #152234;
+  border-radius: 4px;
+  display: flex;
+  justify-content: space-between;
+  font-size: 1.15rem;
+}
+
+.result-teams {
+  font-weight: 700;
+  font-size: 1.2rem;
+}
+
+.result-score {
+  font-size: 1.2rem;
+  opacity: 0.9;
+}
+
+/* FOOTER: SPONSOR CAROUSEL */
+
+.footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(10, 20, 35, 0.95);
+  border-top: 2px solid #1f3b5a;
+  padding: 8px 12px;
+  z-index: 1;
+  height: 120px; /* bar height */
+  display: flex;
+  align-items: center;
+}
+
+.sponsors-carousel {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  align-items: center;
+}
+
+.sponsors-carousel img {
+  height: 80px; /* logo height */
+  width: auto;
+  object-fit: contain;
+  opacity: 0.4;
+  transition: opacity 0.4s ease, transform 0.4s ease, filter 0.4s ease;
+}
+
+.sponsors-carousel img.active {
+  opacity: 1;
+  transform: scale(1.1);
+  filter: drop-shadow(0 0 8px rgba(255,255,255,0.7));
+}
+
+/* ADMIN PAGE */
+
+.admin-body {
+  background: #0b1724;
+  color: #f5f5f5;
+}
+
+.admin-header {
+  padding: 12px 24px;
+  background: #12263a;
+  border-bottom: 2px solid #1f3b5a;
+}
+
+.admin-header h1 {
+  margin: 0;
+}
+
+.admin-subtitle {
+  font-size: 0.9rem;
+  opacity: 0.8;
+  margin-top: 4px;
+}
+
+.admin-main {
+  padding: 16px 24px 40px;
+}
+
+.admin-panel {
+  margin-bottom: 16px;
+  background: #101a28;
+  padding: 12px;
+  border-radius: 6px;
+}
+
+.admin-panel-grid {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.admin-quick-help {
+  background: #152234;
+  padding: 8px 10px;
+  border-radius: 4px;
+  font-size: 0.9rem;
+}
+
+.admin-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.admin-buttons button {
+  padding: 8px 12px;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.danger-button {
+  background: #b30000;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
+.danger-button:hover {
+  background: #d00000;
+}
+
+.admin-section {
+  margin-bottom: 16px;
+  background: #101a28;
+  padding: 12px;
+  border-radius: 6px;
+}
+
+.hidden {
+  display: none;
+}
+
+label {
+  display: block;
+  margin-bottom: 6px;
+}
+
+input[type="text"],
+input[type="number"],
+select {
+  width: 100%;
+  max-width: 320px;
+  padding: 4px 6px;
+  margin-top: 2px;
+}
+
+button {
+  background: #1f3b5a;
+  color: #f5f5f5;
+  border: none;
+  border-radius: 4px;
+}
+
+button:hover {
+  background: #284a73;
+}
+
+.admin-note {
+  font-size: 0.85rem;
+  opacity: 0.8;
+  margin: 6px 0;
+}
+
+.scroll-panel {
+  max-height: 400px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+/* RESULTS LAYOUT */
+
+.results-layout {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 16px;
+}
+
+.results-form {
+  background: #152234;
+  padding: 8px 10px;
+  border-radius: 4px;
+}
+
+.results-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.results-row label {
+  flex: 1;
+}
+
+.results-actions {
+  margin-top: 8px;
+  text-align: right;
+}
+
+/* TEAMS */
+
+#teamsList {
+  margin-bottom: 8px;
+}
+
+.team-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #152234;
+  padding: 4px 6px;
+  margin-bottom: 2px;
+  border-radius: 4px;
+  font-size: 0.9rem;
+}
+
+.team-row button {
+  font-size: 0.8rem;
+  padding: 2px 6px;
+}
+
+/* FORMS */
+
+.inline-form {
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+  margin-top: 8px;
+}
+
+.inline-form label {
+  flex: 1;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 8px 16px;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* PANEL SPLIT */
+
+.panel-split {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
+}
+
+/* SPONSORS ADMIN SIMPLE */
+
+.sponsors-admin-list {
+  margin-top: 8px;
+}
+
+.sponsor-row-simple {
+  display: grid;
+  grid-template-columns: 150px 1fr auto;
+  align-items: center;
+  gap: 8px;
+  background: #152234;
+  padding: 4px 6px;
+  margin-bottom: 4px;
+  border-radius: 4px;
+  font-size: 0.9rem;
+}
+
+.sponsor-thumb {
+  width: 150px;
+  height: 150px;
+  object-fit: contain;
+  background: #0b1724;
+  border-radius: 4px;
+}
+
+.sponsor-info {
+  word-break: break-all;
+}
+
+.sponsor-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sponsor-controls button {
+  font-size: 0.8rem;
+  padding: 2px 6px;
+}
+
+/* BACKGROUNDS ADMIN */
+
+.backgrounds-admin-grid {
+  margin-top: 8px;
+}
+
+#backgroundsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 8px;
+}
+
+.bg-item {
+  background: #152234;
+  padding: 6px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: center;
+}
+
+.bg-thumb {
+  width: 150px;
+  height: 150px;
+  object-fit: cover;
+  background: #0b1724;
+  border-radius: 4px;
+}
+
+.bg-item label {
+  margin-bottom: 0;
+}
