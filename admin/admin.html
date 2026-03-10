@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Comet Bay Bowling Club – Admin</title>
+  <link rel="stylesheet" href="http://localhost:3000/admin/style.css">
+</head>
+<body class="admin-body">
+  <header class="admin-header">
+    <h1>Comet Bay Bowling Club – Admin</h1>
+    <div class="admin-subtitle">Event control • Results • Teams • Sponsors • Backgrounds</div>
+  </header>
+
+  <main class="admin-main">
+
+    <section class="admin-panel admin-panel-grid">
+      <div>
+        <h2>Event Controls</h2>
+        <div class="admin-buttons">
+          <button id="btnResults">Results</button>
+          <button id="btnTeams">Teams</button>
+          <button id="btnScoring">Scoring</button>
+          <button id="btnLogos">Sponsors & Logo</button>
+          <button id="btnBackgrounds">Backgrounds</button>
+        </div>
+        <button id="btnResetEvent" class="danger-button">
+          Reset Event (Clear Teams + Results)
+        </button>
+      </div>
+      <div class="admin-quick-help">
+        <h3>Typical Flow</h3>
+        <ol>
+          <li><strong>Before play:</strong> Reset Event → Add Teams</li>
+          <li><strong>During play:</strong> Add Results</li>
+          <li><strong>Any time:</strong> Adjust sponsors, logo, backgrounds</li>
+        </ol>
+      </div>
+    </section>
+
+    <!-- RESULTS PANEL -->
+    <section id="panelResults" class="admin-section">
+      <h2>Enter Results</h2>
+      <div class="results-layout">
+        <form id="resultForm" class="results-form">
+          <div class="results-row">
+            <label>Round
+              <input type="number" id="roundInput" min="1" max="50" value="1">
+            </label>
+            <label>Sheet / Rink (optional)
+              <input type="text" id="sheetInput" placeholder="e.g. Rink 3">
+            </label>
+          </div>
+
+          <div class="results-row">
+            <label>Team / Skipper 1
+              <select id="team1Select"></select>
+            </label>
+            <label>Team / Skipper 2
+              <select id="team2Select"></select>
+            </label>
+          </div>
+
+          <div class="results-row">
+            <label>Shots – Team 1
+              <input type="number" id="shots1Input" min="0" value="0">
+            </label>
+            <label>Shots – Team 2
+              <input type="number" id="shots2Input" min="0" value="0">
+            </label>
+          </div>
+
+          <div class="results-row">
+            <label>Winner
+              <select id="winnerSelect">
+                <option value="auto">Auto (by shots)</option>
+                <option value="team1">Force Team 1</option>
+                <option value="team2">Force Team 2</option>
+                <option value="draw">Force Draw</option>
+              </select>
+            </label>
+          </div>
+
+          <div class="results-actions">
+            <button type="submit">Save Result</button>
+          </div>
+        </form>
+
+        <div class="results-list-panel">
+          <h3>Recent Results</h3>
+          <div class="admin-note">Latest at the top. TV updates automatically.</div>
+          <div id="adminResultsList" class="scroll-panel"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TEAMS PANEL -->
+    <section id="panelTeams" class="admin-section hidden">
+      <h2>Teams / Skippers</h2>
+      <div class="admin-note">These appear in the results dropdowns and ladder.</div>
+      <div id="teamsList" class="scroll-panel"></div>
+      <form id="addTeamForm" class="inline-form">
+        <label>New Team / Skipper Name
+          <input type="text" id="newTeamName">
+        </label>
+        <button type="submit">Add Team</button>
+      </form>
+    </section>
+
+    <!-- SCORING PANEL -->
+    <section id="panelScoring" class="admin-section hidden">
+      <h2>Scoring Settings</h2>
+      <form id="scoringForm" class="form-grid">
+        <label>Points for Win
+          <input type="number" id="pointsWin" value="3">
+        </label>
+        <label>Points for Draw
+          <input type="number" id="pointsDraw" value="1">
+        </label>
+        <label>Points for Loss
+          <input type="number" id="pointsLoss" value="0">
+        </label>
+        <label class="checkbox-label">
+          <input type="checkbox" id="usePctTiebreak">
+          Use percentage as tiebreaker
+        </label>
+        <label class="checkbox-label">
+          <input type="checkbox" id="autoWinner">
+          Automatically determine winner by shots
+        </label>
+        <button type="submit">Save Scoring Settings</button>
+      </form>
+    </section>
+
+    <!-- LOGOS & SPONSORS PANEL -->
+    <section id="panelLogos" class="admin-section hidden">
+      <h2>Club Logo & Sponsors</h2>
+
+      <div class="panel-split">
+        <div>
+          <h3>Club Logo</h3>
+          <form id="logosForm">
+            <label>Club Logo Path
+              <input type="text" id="clubLogoPath" value="images/club-logo.png">
+            </label>
+            <button type="submit">Save Club Logo</button>
+          </form>
+        </div>
+        <div class="admin-note">
+          Sponsors appear along the bottom of the display. Tick to include, untick to hide.
+        </div>
+      </div>
+
+      <h3>Sponsor Logos</h3>
+      <div class="admin-note">
+        Any file name is fine (png/jpg). Logos are shown at about 80px high on the display.
+      </div>
+
+      <div id="sponsorList" class="scroll-panel sponsors-admin-list"></div>
+
+      <form id="addSponsorForm" class="inline-form">
+        <label>New Sponsor Logo Path
+          <input type="text" id="newSponsorPath" placeholder="images/sponsors/bobs_meats.png">
+        </label>
+        <button type="submit">Add Sponsor</button>
+      </form>
+    </section>
+
+    <!-- BACKGROUNDS PANEL -->
+    <section id="panelBackgrounds" class="admin-section hidden">
+      <h2>Backgrounds</h2>
+      <form id="backgroundSettingsForm" class="form-grid">
+        <label>Mode
+          <select id="backgroundMode">
+            <option value="single">Single Image</option>
+            <option value="sequential">Sequential</option>
+            <option value="random">Random</option>
+          </select>
+        </label>
+        <label>Change Interval (seconds)
+          <input type="number" id="backgroundInterval" min="5" max="600" value="30">
+        </label>
+        <label>Overlay Strength
+          <select id="overlayStrength">
+            <option value="0.25">Light</option>
+            <option value="0.4" selected>Medium</option>
+            <option value="0.55">Strong</option>
+          </select>
+        </label>
+        <button type="submit">Save Background Settings</button>
+      </form>
+
+      <div class="admin-note">
+        Add any image path (jpg/png) from <code>images/backgrounds/</code>. Tick to include in rotation.
+      </div>
+      <div id="backgroundsGrid" class="scroll-panel backgrounds-admin-grid"></div>
+
+      <form id="addBackgroundForm" class="inline-form">
+        <label>New Background Image Path
+          <input type="text" id="newBackgroundPath" placeholder="images/backgrounds/sunset1.jpg">
+        </label>
+        <button type="submit">Add Background</button>
+      </form>
+    </section>
+
+    <!-- PREVIEW PANEL -->
+    <section class="admin-section">
+      <h2>Display Preview (Ladder & Results)</h2>
+      <div class="admin-note">Live preview of the TV display (auto-refreshing).</div>
+      <div style="border:1px solid #1f3b5a; border-radius:4px; overflow:hidden; height:400px;">
+        <iframe
+          src="http://localhost:3000/display/display.html"
+          style="width:100%; height:100%; border:0;"
+        ></iframe>
+      </div>
+    </section>
+  </main>
+
+  <script src="http://localhost:3000/admin/script-admin.js"></script>
+</body>
+</html>
