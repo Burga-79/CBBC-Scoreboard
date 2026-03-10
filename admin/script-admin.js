@@ -1,438 +1,481 @@
-const STORAGE_KEY = "cometBayScoreboardData";
+// Simple keys for localStorage
+const LS_KEYS = {
+  sponsors: "cbbcSponsors",
+  backgrounds: "cbbcBackgrounds",
+  logo: "cbbcLogo",
+  theme: "cbbcTheme",
+  contentTheme: "cbbcContentTheme",
+  scoring: "cbbcScoring",
+  teams: "cbbcTeams",
+  results: "cbbcResults",
+};
 
-function defaultData() {
-  return {
-    teams: [],
-    results: [],
-    scoring: {
-      win: 3,
-      draw: 1,
-      loss: 0,
-      usePctTiebreaker: false,
-      autoWinner: true
-    },
-    logos: {
-      clubLogo: "images/club-logo.png",
-      sponsors: [] // { path, enabled }
-    },
-    backgrounds: {
-      mode: "single",
-      intervalSeconds: 30,
-      overlay: 0.4,
-      images: [],   // { path, enabled }
-      currentIndex: 0
-    }
-  };
-}
-
-function loadData() {
-  const raw = localStorage.getItem(STORAGE_KEY);
-  if (!raw) return defaultData();
+function loadJSON(key, fallback) {
   try {
-    const parsed = JSON.parse(raw);
-
-    if (!parsed.scoring) {
-      parsed.scoring = defaultData().scoring;
-    }
-    if (!parsed.logos) parsed.logos = {};
-    if (!Array.isArray(parsed.logos.sponsors)) {
-      if (Array.isArray(parsed.logos.sponsors)) {
-        parsed.logos.sponsors = parsed.logos.sponsors.map(p => ({ path: p, enabled: true }));
-      } else {
-        parsed.logos.sponsors = [];
-      }
-    } else if (parsed.logos.sponsors.length && typeof parsed.logos.sponsors[0] === "string") {
-      parsed.logos.sponsors = parsed.logos.sponsors.map(p => ({ path: p, enabled: true }));
-    }
-    if (!parsed.logos.clubLogo) {
-      parsed.logos.clubLogo = "images/club-logo.png";
-    }
-
-    if (!parsed.backgrounds) {
-      parsed.backgrounds = defaultData().backgrounds;
-    } else {
-      if (!Array.isArray(parsed.backgrounds.images)) {
-        parsed.backgrounds.images = [];
-      }
-      if (typeof parsed.backgrounds.mode !== "string") parsed.backgrounds.mode = "single";
-      if (typeof parsed.backgrounds.intervalSeconds !== "number") parsed.backgrounds.intervalSeconds = 30;
-      if (typeof parsed.backgrounds.overlay !== "number") parsed.backgrounds.overlay = 0.4;
-      if (typeof parsed.backgrounds.currentIndex !== "number") parsed.backgrounds.currentIndex = 0;
-    }
-
-    return parsed;
+    const raw = localStorage.getItem(key);
+    if (!raw) return fallback;
+    return JSON.parse(raw);
   } catch {
-    return defaultData();
+    return fallback;
   }
 }
 
-function saveData(data) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+function saveJSON(key, value) {
+  localStorage.setItem(key, JSON.stringify(value));
 }
 
-let data = loadData();
+document.addEventListener("DOMContentLoaded", () => {
+  setupNavigation();
+  setupThemes();
+  setupPreview();
+  setupSponsors();
+  setupBackgrounds();
+  setupLogo();
+  setupScoring();
+  setupStats();
+  setupReset();
+});
 
-/* PANEL SWITCHING */
+/* NAVIGATION */
 
-function showPanel(id) {
-  document.querySelectorAll(".admin-section").forEach(sec => {
-    sec.classList.add("hidden");
-  });
-  const panel = document.getElementById(id);
-  if (panel) panel.classList.remove("hidden");
-}
+function setupNavigation() {
+  const buttons = document.querySelectorAll(".sidebar-nav button");
+  const panels = document.querySelectorAll(".panel");
 
-function initPanelButtons() {
-  document.getElementById("btnResults").addEventListener("click", () => showPanel("panelResults"));
-  document.getElementById("btnTeams").addEventListener("click", () => showPanel("panelTeams"));
-  document.getElementById("btnScoring").addEventListener("click", () => showPanel("panelScoring"));
-  document.getElementById("btnLogos").addEventListener("click", () => showPanel("panelLogos"));
-  document.getElementById("btnBackgrounds").addEventListener("click", () => showPanel("panelBackgrounds"));
-
-  document.getElementById("btnResetEvent").addEventListener("click", () => {
-    if (!confirm(
-      "This will CLEAR ALL TEAMS and ALL RESULTS.\n\n" +
-      "Logos, backgrounds, and settings will NOT be touched.\n\n" +
-      "Are you sure you want to reset the event?"
-    )) {
-      return;
-    }
-
-    data.teams = [];
-    data.results = [];
-    saveData(data);
-
-    renderTeams();
-    populateTeamDropdowns();
-    renderAdminResults();
-
-    alert("Event reset.\nTeams and results cleared.\nYou may now enter new teams for the next event.");
-  });
-}
-
-/* TEAMS */
-
-function renderTeams() {
-  const container = document.getElementById("teamsList");
-  container.innerHTML = "";
-  data.teams.forEach((name, index) => {
-    const row = document.createElement("div");
-    row.className = "team-row";
-    const span = document.createElement("span");
-    span.textContent = `${index + 1}. ${name}`;
-    const btn = document.createElement("button");
-    btn.textContent = "Remove";
+  buttons.forEach((btn) => {
     btn.addEventListener("click", () => {
-      if (!confirm(`Remove "${name}"?`)) return;
-      data.teams.splice(index, 1);
-      saveData(data);
-      renderTeams();
-      populateTeamDropdowns();
-    });
-    row.appendChild(span);
-    row.appendChild(btn);
-    container.appendChild(row);
-  });
-}
+      const panelId = btn.getAttribute("data-panel");
 
-function initTeams() {
-  const form = document.getElementById("addTeamForm");
-  form.addEventListener("submit", e => {
-    e.preventDefault();
-    const input = document.getElementById("newTeamName");
-    const name = input.value.trim();
-    if (!name) return;
-    data.teams.push(name);
-    input.value = "";
-    saveData(data);
-    renderTeams();
-    populateTeamDropdowns();
-  });
-}
+      buttons.forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
 
-/* RESULTS */
-
-function populateTeamDropdowns() {
-  const t1 = document.getElementById("team1Select");
-  const t2 = document.getElementById("team2Select");
-  [t1, t2].forEach(sel => {
-    sel.innerHTML = "";
-    data.teams.forEach(name => {
-      const opt = document.createElement("option");
-      opt.value = name;
-      opt.textContent = name;
-      sel.appendChild(opt);
+      panels.forEach((p) => {
+        p.classList.toggle("active", p.id === `panel-${panelId}`);
+      });
     });
   });
 }
 
-function renderAdminResults() {
-  const container = document.getElementById("adminResultsList");
-  container.innerHTML = "";
-  const sorted = [...data.results].sort((a, b) => b.round - a.round || b.timestamp - a.timestamp);
-  sorted.forEach(r => {
-    const div = document.createElement("div");
-    div.className = "admin-result-item";
-    const sheetText = r.sheet ? ` • ${r.sheet}` : "";
-    div.textContent = `R${r.round}${sheetText}: ${r.team1} ${r.shots1} - ${r.shots2} ${r.team2}`;
-    container.appendChild(div);
-  });
+/* THEMES */
+
+function applyTheme() {
+  const theme = localStorage.getItem(LS_KEYS.theme) || "dark";
+  const contentTheme = localStorage.getItem(LS_KEYS.contentTheme) || "light";
+
+  document.body.classList.remove(
+    "theme-dark",
+    "theme-accent-blue",
+    "theme-accent-green",
+    "theme-accent-dual"
+  );
+  document.body.classList.add(`theme-${theme}`);
+
+  document.body.classList.remove("content-light", "content-dark");
+  document.body.classList.add(`content-${contentTheme}`);
+
+  // Sync radio buttons
+  const themeRadio = document.querySelector(
+    `input[name="themeSelect"][value="${theme}"]`
+  );
+  if (themeRadio) themeRadio.checked = true;
+
+  const contentRadio = document.querySelector(
+    `input[name="contentTheme"][value="${contentTheme}"]`
+  );
+  if (contentRadio) contentRadio.checked = true;
 }
 
-function initResults() {
-  const form = document.getElementById("resultForm");
-  form.addEventListener("submit", e => {
-    e.preventDefault();
-    const round = parseInt(document.getElementById("roundInput").value, 10) || 1;
-    const sheet = document.getElementById("sheetInput").value.trim() || "";
-    const team1 = document.getElementById("team1Select").value;
-    const team2 = document.getElementById("team2Select").value;
-    const shots1 = parseInt(document.getElementById("shots1Input").value, 10) || 0;
-    const shots2 = parseInt(document.getElementById("shots2Input").value, 10) || 0;
-    const winnerMode = document.getElementById("winnerSelect").value;
+function setupThemes() {
+  // Default values if not set
+  if (!localStorage.getItem(LS_KEYS.theme)) {
+    localStorage.setItem(LS_KEYS.theme, "dark");
+  }
+  if (!localStorage.getItem(LS_KEYS.contentTheme)) {
+    localStorage.setItem(LS_KEYS.contentTheme, "light");
+  }
 
-    if (!team1 || !team2 || team1 === team2) {
-      alert("Please select two different teams.");
-      return;
-    }
+  applyTheme();
 
-    let result = "draw";
-    if (winnerMode === "team1") {
-      result = "team1";
-    } else if (winnerMode === "team2") {
-      result = "team2";
-    } else if (winnerMode === "draw") {
-      result = "draw";
-    } else if (winnerMode === "auto" && data.scoring.autoWinner) {
-      if (shots1 > shots2) result = "team1";
-      else if (shots2 > shots1) result = "team2";
-      else result = "draw";
-    }
-
-    data.results.push({
-      round,
-      sheet,
-      team1,
-      team2,
-      shots1,
-      shots2,
-      result,
-      timestamp: Date.now()
+  document
+    .querySelectorAll('input[name="themeSelect"]')
+    .forEach((radio) => {
+      radio.addEventListener("change", (e) => {
+        localStorage.setItem(LS_KEYS.theme, e.target.value);
+        applyTheme();
+      });
     });
 
-    saveData(data);
-    renderAdminResults();
-    alert("Result saved. The TV display will update automatically.");
-  });
+  document
+    .querySelectorAll('input[name="contentTheme"]')
+    .forEach((radio) => {
+      radio.addEventListener("change", (e) => {
+        localStorage.setItem(LS_KEYS.contentTheme, e.target.value);
+        applyTheme();
+      });
+    });
 }
 
-/* SCORING */
+/* PREVIEW */
 
-function initScoring() {
-  document.getElementById("pointsWin").value = data.scoring.win;
-  document.getElementById("pointsDraw").value = data.scoring.draw;
-  document.getElementById("pointsLoss").value = data.scoring.loss;
-  document.getElementById("usePctTiebreak").checked = data.scoring.usePctTiebreaker;
-  document.getElementById("autoWinner").checked = data.scoring.autoWinner;
+let previewIntervalId = null;
 
-  const form = document.getElementById("scoringForm");
-  form.addEventListener("submit", e => {
-    e.preventDefault();
-    data.scoring.win = parseInt(document.getElementById("pointsWin").value, 10) || 0;
-    data.scoring.draw = parseInt(document.getElementById("pointsDraw").value, 10) || 0;
-    data.scoring.loss = parseInt(document.getElementById("pointsLoss").value, 10) || 0;
-    data.scoring.usePctTiebreaker = document.getElementById("usePctTiebreak").checked;
-    data.scoring.autoWinner = document.getElementById("autoWinner").checked;
-    saveData(data);
-    alert("Scoring settings saved.");
+function setupPreview() {
+  const frame = document.getElementById("previewFrame");
+  const wrapper = document.getElementById("previewFrameWrapper");
+  const container = document.getElementById("previewContainer");
+  const refreshBtn = document.getElementById("previewRefreshBtn");
+
+  function refreshPreview() {
+    if (!frame) return;
+    const base = "display.html";
+    const url = `${base}?ts=${Date.now()}`;
+    frame.src = url;
+  }
+
+  function resizePreview() {
+    if (!container || !wrapper) return;
+    const containerWidth = container.clientWidth;
+    const scale = containerWidth / 1920;
+    wrapper.style.transform = `scale(${scale})`;
+  }
+
+  window.addEventListener("resize", resizePreview);
+  resizePreview();
+
+  refreshBtn.addEventListener("click", () => {
+    refreshPreview();
   });
+
+  // Auto-refresh every 15 seconds
+  if (previewIntervalId) clearInterval(previewIntervalId);
+  previewIntervalId = setInterval(refreshPreview, 15000);
 }
 
 /* SPONSORS */
 
-function renderSponsors() {
-  const container = document.getElementById("sponsorList");
-  container.innerHTML = "";
+function setupSponsors() {
+  const uploadInput = document.getElementById("sponsorUploadInput");
+  const uploadBtn = document.getElementById("sponsorUploadBtn");
+  const listEl = document.getElementById("sponsorList");
 
-  data.logos.sponsors.forEach((s, index) => {
-    const row = document.createElement("div");
-    row.className = "sponsor-row-simple";
+  function renderSponsors() {
+    const sponsors = loadJSON(LS_KEYS.sponsors, []);
+    listEl.innerHTML = "";
 
-    const thumb = document.createElement("img");
-    thumb.className = "sponsor-thumb";
-    thumb.src = `http://localhost:3000/${s.path}`;
-    thumb.alt = "Sponsor logo";
-    thumb.onerror = () => {
-      thumb.style.opacity = "0.4";
-    };
+    sponsors.forEach((sponsor, index) => {
+      const item = document.createElement("div");
+      item.className = "thumb-item";
 
-    const info = document.createElement("div");
-    info.className = "sponsor-info";
-    info.textContent = s.path;
+      const img = document.createElement("img");
+      img.src = sponsor.url;
+      img.alt = sponsor.name || `Sponsor ${index + 1}`;
 
-    const controls = document.createElement("div");
-    controls.className = "sponsor-controls";
+      const meta = document.createElement("div");
+      meta.className = "thumb-meta";
 
-    const label = document.createElement("label");
-    label.className = "checkbox-label";
-    const cb = document.createElement("input");
-    cb.type = "checkbox";
-    cb.checked = !!s.enabled;
-    cb.addEventListener("change", () => {
-      s.enabled = cb.checked;
-      saveData(data);
+      const nameSpan = document.createElement("span");
+      nameSpan.textContent = sponsor.name || sponsor.filename;
+
+      const pathSpan = document.createElement("span");
+      pathSpan.textContent = sponsor.filename;
+      pathSpan.style.fontSize = "11px";
+      pathSpan.style.color = "var(--muted)";
+
+      meta.appendChild(nameSpan);
+      meta.appendChild(pathSpan);
+
+      const actions = document.createElement("div");
+      actions.className = "thumb-actions";
+
+      const visibleLabel = document.createElement("label");
+      const visibleCheckbox = document.createElement("input");
+      visibleCheckbox.type = "checkbox";
+      visibleCheckbox.checked = !!sponsor.active;
+      visibleCheckbox.addEventListener("change", () => {
+        const sponsors = loadJSON(LS_KEYS.sponsors, []);
+        sponsors[index].active = visibleCheckbox.checked;
+        saveJSON(LS_KEYS.sponsors, sponsors);
+        updateStats();
+      });
+      visibleLabel.appendChild(visibleCheckbox);
+      visibleLabel.appendChild(document.createTextNode("Visible"));
+
+      const deleteBtn = document.createElement("button");
+      deleteBtn.className = "danger";
+      deleteBtn.textContent = "Delete";
+      deleteBtn.addEventListener("click", () => {
+        const sponsors = loadJSON(LS_KEYS.sponsors, []);
+        sponsors.splice(index, 1);
+        saveJSON(LS_KEYS.sponsors, sponsors);
+        renderSponsors();
+        updateStats();
+      });
+
+      actions.appendChild(visibleLabel);
+      actions.appendChild(deleteBtn);
+
+      item.appendChild(img);
+      item.appendChild(meta);
+      item.appendChild(actions);
+
+      listEl.appendChild(item);
     });
-    label.appendChild(cb);
-    label.appendChild(document.createTextNode("Show on display"));
+  }
 
-    const removeBtn = document.createElement("button");
-    removeBtn.textContent = "Remove";
-    removeBtn.addEventListener("click", () => {
-      if (!confirm(`Remove sponsor logo: ${s.path}?`)) return;
-      data.logos.sponsors.splice(index, 1);
-      saveData(data);
+  uploadBtn.addEventListener("click", async () => {
+    if (!uploadInput.files || !uploadInput.files[0]) return;
+    const file = uploadInput.files[0];
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      const res = await fetch("/upload/sponsor", {
+        method: "POST",
+        body: formData,
+      });
+      if (!res.ok) throw new Error("Upload failed");
+      const data = await res.json();
+
+      const sponsors = loadJSON(LS_KEYS.sponsors, []);
+      sponsors.push({
+        filename: data.filename,
+        url: data.url,
+        active: true,
+        name: data.filename,
+      });
+      saveJSON(LS_KEYS.sponsors, sponsors);
+      uploadInput.value = "";
       renderSponsors();
-    });
-
-    controls.appendChild(label);
-    controls.appendChild(removeBtn);
-
-    row.appendChild(thumb);
-    row.appendChild(info);
-    row.appendChild(controls);
-    container.appendChild(row);
+      updateStats();
+    } catch (err) {
+      console.error("Sponsor upload error", err);
+      alert("Sponsor upload failed.");
+    }
   });
-}
 
-function initSponsors() {
   renderSponsors();
-
-  const form = document.getElementById("addSponsorForm");
-  form.addEventListener("submit", e => {
-    e.preventDefault();
-    const input = document.getElementById("newSponsorPath");
-    const path = input.value.trim();
-    if (!path) return;
-
-    data.logos.sponsors.push({ path, enabled: true });
-    saveData(data);
-    input.value = "";
-    renderSponsors();
-    alert("Sponsor added. Display will update automatically.");
-  });
-}
-
-/* LOGO */
-
-function initLogos() {
-  document.getElementById("clubLogoPath").value = data.logos.clubLogo || "images/club-logo.png";
-
-  const form = document.getElementById("logosForm");
-  form.addEventListener("submit", e => {
-    e.preventDefault();
-    data.logos.clubLogo = document.getElementById("clubLogoPath").value.trim();
-    saveData(data);
-    alert("Club logo updated.");
-  });
-
-  initSponsors();
 }
 
 /* BACKGROUNDS */
 
-function renderBackgroundsGrid() {
-  const grid = document.getElementById("backgroundsGrid");
-  grid.innerHTML = "";
+function setupBackgrounds() {
+  const uploadInput = document.getElementById("backgroundUploadInput");
+  const uploadBtn = document.getElementById("backgroundUploadBtn");
+  const gridEl = document.getElementById("backgroundGrid");
 
-  data.backgrounds.images.forEach((bg, index) => {
-    const div = document.createElement("div");
-    div.className = "bg-item";
+  function renderBackgrounds() {
+    const backgrounds = loadJSON(LS_KEYS.backgrounds, []);
+    gridEl.innerHTML = "";
 
-    const img = document.createElement("img");
-    img.className = "bg-thumb";
-    img.src = `http://localhost:3000/${bg.path}`;
-    img.alt = "Background";
-    img.onerror = () => {
-      img.style.opacity = "0.3";
+    backgrounds.forEach((bg, index) => {
+      const item = document.createElement("div");
+      item.className = "bg-item";
+
+      const img = document.createElement("img");
+      img.src = bg.url;
+      img.alt = bg.filename;
+
+      const footer = document.createElement("div");
+      footer.className = "bg-item-footer";
+
+      const visibleLabel = document.createElement("label");
+      const visibleCheckbox = document.createElement("input");
+      visibleCheckbox.type = "checkbox";
+      visibleCheckbox.checked = !!bg.active;
+      visibleCheckbox.addEventListener("change", () => {
+        const backgrounds = loadJSON(LS_KEYS.backgrounds, []);
+        backgrounds[index].active = visibleCheckbox.checked;
+        saveJSON(LS_KEYS.backgrounds, backgrounds);
+        updateStats();
+      });
+      visibleLabel.appendChild(visibleCheckbox);
+      visibleLabel.appendChild(document.createTextNode("Use"));
+
+      const deleteBtn = document.createElement("button");
+      deleteBtn.className = "danger";
+      deleteBtn.textContent = "Delete";
+      deleteBtn.addEventListener("click", () => {
+        const backgrounds = loadJSON(LS_KEYS.backgrounds, []);
+        backgrounds.splice(index, 1);
+        saveJSON(LS_KEYS.backgrounds, backgrounds);
+        renderBackgrounds();
+        updateStats();
+      });
+
+      footer.appendChild(visibleLabel);
+      footer.appendChild(deleteBtn);
+
+      item.appendChild(img);
+      item.appendChild(footer);
+
+      gridEl.appendChild(item);
+    });
+  }
+
+  uploadBtn.addEventListener("click", async () => {
+    if (!uploadInput.files || !uploadInput.files[0]) return;
+    const file = uploadInput.files[0];
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      const res = await fetch("/upload/background", {
+        method: "POST",
+        body: formData,
+      });
+      if (!res.ok) throw new Error("Upload failed");
+      const data = await res.json();
+
+      const backgrounds = loadJSON(LS_KEYS.backgrounds, []);
+      backgrounds.push({
+        filename: data.filename,
+        url: data.url,
+        active: true,
+      });
+      saveJSON(LS_KEYS.backgrounds, backgrounds);
+      uploadInput.value = "";
+      renderBackgrounds();
+      updateStats();
+    } catch (err) {
+      console.error("Background upload error", err);
+      alert("Background upload failed.");
+    }
+  });
+
+  renderBackgrounds();
+}
+
+/* LOGO */
+
+function setupLogo() {
+  const uploadInput = document.getElementById("logoUploadInput");
+  const uploadBtn = document.getElementById("logoUploadBtn");
+  const logoImg = document.getElementById("logoPreview");
+
+  function renderLogo() {
+    const logo = loadJSON(LS_KEYS.logo, null);
+    if (logo && logo.url) {
+      logoImg.src = logo.url;
+      logoImg.style.display = "block";
+    } else {
+      logoImg.style.display = "none";
+    }
+  }
+
+  uploadBtn.addEventListener("click", async () => {
+    if (!uploadInput.files || !uploadInput.files[0]) return;
+    const file = uploadInput.files[0];
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      const res = await fetch("/upload/logo", {
+        method: "POST",
+        body: formData,
+      });
+      if (!res.ok) throw new Error("Upload failed");
+      const data = await res.json();
+
+      const logo = {
+        filename: data.filename,
+        url: data.url,
+      };
+      saveJSON(LS_KEYS.logo, logo);
+      uploadInput.value = "";
+      renderLogo();
+    } catch (err) {
+      console.error("Logo upload error", err);
+      alert("Logo upload failed.");
+    }
+  });
+
+  renderLogo();
+}
+
+/* SCORING */
+
+function setupScoring() {
+  const winInput = document.getElementById("pointsWin");
+  const drawInput = document.getElementById("pointsDraw");
+  const lossInput = document.getElementById("pointsLoss");
+  const percCheckbox = document.getElementById("usePercentageTiebreak");
+  const autoCheckbox = document.getElementById("autoDetermineWinner");
+  const saveBtn = document.getElementById("saveScoringBtn");
+
+  const scoring = loadJSON(LS_KEYS.scoring, {
+    win: 4,
+    draw: 2,
+    loss: 0,
+    usePercentage: true,
+    autoWinner: true,
+  });
+
+  winInput.value = scoring.win;
+  drawInput.value = scoring.draw;
+  lossInput.value = scoring.loss;
+  percCheckbox.checked = scoring.usePercentage;
+  autoCheckbox.checked = scoring.autoWinner;
+
+  saveBtn.addEventListener("click", () => {
+    const newScoring = {
+      win: Number(winInput.value) || 0,
+      draw: Number(drawInput.value) || 0,
+      loss: Number(lossInput.value) || 0,
+      usePercentage: percCheckbox.checked,
+      autoWinner: autoCheckbox.checked,
     };
-
-    const label = document.createElement("label");
-    label.className = "checkbox-label";
-    const cb = document.createElement("input");
-    cb.type = "checkbox";
-    cb.checked = !!bg.enabled;
-    cb.addEventListener("change", () => {
-      bg.enabled = cb.checked;
-      saveData(data);
-    });
-    label.appendChild(cb);
-    label.appendChild(document.createTextNode("Use in rotation"));
-
-    const pathDiv = document.createElement("div");
-    pathDiv.textContent = bg.path;
-    pathDiv.style.fontSize = "0.75rem";
-    pathDiv.style.opacity = "0.8";
-
-    const removeBtn = document.createElement("button");
-    removeBtn.textContent = "Remove";
-    removeBtn.style.marginTop = "4px";
-    removeBtn.addEventListener("click", () => {
-      if (!confirm(`Remove background: ${bg.path}?`)) return;
-      data.backgrounds.images.splice(index, 1);
-      saveData(data);
-      renderBackgroundsGrid();
-    });
-
-    div.appendChild(img);
-    div.appendChild(label);
-    div.appendChild(pathDiv);
-    div.appendChild(removeBtn);
-    grid.appendChild(div);
+    saveJSON(LS_KEYS.scoring, newScoring);
+    alert("Scoring settings saved.");
   });
 }
 
-function initBackgrounds() {
-  document.getElementById("backgroundMode").value = data.backgrounds.mode || "single";
-  document.getElementById("backgroundInterval").value = data.backgrounds.intervalSeconds || 30;
-  document.getElementById("overlayStrength").value = data.backgrounds.overlay ?? 0.4;
+/* STATS */
 
-  renderBackgroundsGrid();
-
-  const form = document.getElementById("backgroundSettingsForm");
-  form.addEventListener("submit", e => {
-    e.preventDefault();
-    data.backgrounds.mode = document.getElementById("backgroundMode").value;
-    data.backgrounds.intervalSeconds = parseInt(document.getElementById("backgroundInterval").value, 10) || 30;
-    data.backgrounds.overlay = parseFloat(document.getElementById("overlayStrength").value) || 0.4;
-    saveData(data);
-    alert("Background settings saved. The TV display will update automatically.");
-  });
-
-  const addForm = document.getElementById("addBackgroundForm");
-  addForm.addEventListener("submit", e => {
-    e.preventDefault();
-    const input = document.getElementById("newBackgroundPath");
-    const path = input.value.trim();
-    if (!path) return;
-    data.backgrounds.images.push({ path, enabled: true });
-    saveData(data);
-    input.value = "";
-    renderBackgroundsGrid();
-    alert("Background added. Display will use it if enabled.");
-  });
+function setupStats() {
+  updateStats();
 }
 
-/* INIT */
+function updateStats() {
+  const teams = loadJSON(LS_KEYS.teams, []);
+  const results = loadJSON(LS_KEYS.results, []);
+  const sponsors = loadJSON(LS_KEYS.sponsors, []);
+  const backgrounds = loadJSON(LS_KEYS.backgrounds, []);
 
-document.addEventListener("DOMContentLoaded", () => {
-  initPanelButtons();
-  renderTeams();
-  initTeams();
-  populateTeamDropdowns();
-  initResults();
-  renderAdminResults();
-  initScoring();
-  initLogos();
-  initBackgrounds();
-  showPanel("panelResults");
-});
+  const statTeams = document.getElementById("statTeams");
+  const statResults = document.getElementById("statResults");
+  const statSponsors = document.getElementById("statSponsors");
+  const statBackgrounds = document.getElementById("statBackgrounds");
+
+  if (statTeams) statTeams.textContent = teams.length;
+  if (statResults) statResults.textContent = results.length;
+  if (statSponsors)
+    statSponsors.textContent = sponsors.filter((s) => s.active).length;
+  if (statBackgrounds)
+    statBackgrounds.textContent = backgrounds.filter((b) => b.active).length;
+}
+
+/* RESET */
+
+function setupReset() {
+  const btn = document.getElementById("resetEventBtn");
+  if (!btn) return;
+
+  btn.addEventListener("click", () => {
+    const ok = confirm(
+      "This will clear local event data (teams/results/sponsors/backgrounds). Continue?"
+    );
+    if (!ok) return;
+
+    // Adjust to your needs – currently clears these keys only
+    localStorage.removeItem(LS_KEYS.teams);
+    localStorage.removeItem(LS_KEYS.results);
+    localStorage.removeItem(LS_KEYS.sponsors);
+    localStorage.removeItem(LS_KEYS.backgrounds);
+
+    updateStats();
+    alert("Event data cleared (localStorage).");
+  });
+}
