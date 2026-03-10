@@ -9,7 +9,8 @@
     "dev": "electron ."
   },
   "dependencies": {
-    "express": "^4.19.0"
+    "express": "^4.19.0",
+    "multer": "^1.4.5"
   },
   "devDependencies": {
     "electron": "^30.0.0",
@@ -19,13 +20,8 @@
     "appId": "com.cometbay.scoreboard",
     "productName": "Comet Bay Scoreboard",
     "files": [
-      "admin/**/*",
-      "display/**/*",
-      "images/**/*",
-      "main.js",
-      "server.js",
-      "preload.js",
-      "package.json"
+      "**/*",
+      "!dist/**/*"
     ],
     "win": {
       "target": "nsis"
